@@ -1,5 +1,7 @@
 package logic.components;
 
+import exception.BadStatusException;
+
 import java.util.ArrayList;
 
 public class Player {
@@ -10,18 +12,6 @@ public class Player {
     private ArrayList<Food> foods ;
     private ArrayList<Potion> potions ;
     private ArrayList<Ore> ores ;
-
-    public Player(String name, Status status) {
-        this.name = name;
-        this.status = status;
-    }
-
-    public Player(String name, Status status, int energy, int money) {
-        this.name = name;
-        this.status = status;
-        this.energy = energy;
-        this.money = money;
-    }
 
     public String getName() {
         return name;
@@ -44,7 +34,7 @@ public class Player {
     }
 
     public void setEnergy(int energy) {
-        this.energy = energy;
+        this.energy = Math.max(energy , 0);
     }
 
     public int getMoney() {
@@ -52,7 +42,7 @@ public class Player {
     }
 
     public void setMoney(int money) {
-        this.money = money;
+        this.money = Math.max(money , 0);
     }
 
     public ArrayList<Food> getFoods() {
@@ -77,5 +67,75 @@ public class Player {
 
     public void setOres(ArrayList<Ore> ores) {
         this.ores = ores;
+    }
+
+    public Player(String name, Status status) throws BadStatusException {
+        this.setName(name);
+        this.setStatus(status);
+        this.getStatus().setHp(Math.max(status.getHp() , 1));
+        this.setEnergy(10);
+        this.setMoney(100);
+        this.foods = new ArrayList<Food>() ;
+        this.potions = new ArrayList<Potion>() ;
+        this.ores = new ArrayList<Ore>() ;
+    }
+
+    public Player(String name, Status status, int energy, int money) throws BadStatusException{
+        this.setName(name);
+        this.setStatus(status);
+        this.getStatus().setHp(Math.max(status.getHp() , 1));
+        this.setEnergy(energy);
+        this.setMoney(money);
+        this.foods = new ArrayList<Food>() ;
+        this.potions = new ArrayList<Potion>() ;
+        this.ores = new ArrayList<Ore>() ;
+    }
+
+    public boolean buyOre(Ore ore) {
+        if (this.money >= ore.getCost()) {
+            this.setMoney(this.getMoney() - ore.getCost());
+            this.ores.add(ore) ;
+            return true ;
+        }
+        else {
+            return false ;
+        }
+    }
+
+    public void drinkPotion(int index) throws BadStatusException {
+        if(this.potions.size() > index && index >= 0) {
+            this.status.addStatus(this.potions.get(index).getIncreasingStatus());
+            this.potions.remove(index) ;
+        }
+    }
+
+    public void eatFood(int index) {
+        if(this.foods.size() > index && index >= 0) {
+            this.setEnergy(this.energy + this.foods.get(index).getEnergy());
+            this.foods.remove(index) ;
+        }
+    }
+
+    public void sellFood(int index) {
+        if (this.foods.size() > index && index >= 0) {
+            this.setMoney(this.getMoney() + this.foods.get(index).getPrice());
+            this.foods.remove(index) ;
+        }
+    }
+
+    public void sellPotion(int index) {
+        if (this.potions.size() > index && index >= 0) {
+            this.setMoney(this.getMoney() + this.potions.get(index).getPrice());
+            this.potions.remove(index) ;
+        }
+    }
+
+    public void attack(Monster monster) throws BadStatusException{
+        int dm =  Math.max(this.status.getAttack() - monster.getStatus().getDurability() , 0);
+        monster.getStatus().setHp(Math.max(monster.getStatus().getHp() - dm , 0));
+    }
+
+    public void magicAttack(Monster monster) throws BadStatusException{
+        monster.getStatus().setHp(Math.max(monster.getStatus().getHp() - this.status.getMagic() , 0));
     }
 }
